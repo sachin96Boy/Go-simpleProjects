@@ -1,9 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 )
@@ -44,20 +46,58 @@ func main() {
 
 func handleGetMovies(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("handleGetMovies")
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(movies)
 }
 
 func handleGetMovie(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("handleGetMovie")
+	w.Header().Set("Content-Type", "application/json")
+	params := mux.Vars(r)
+	for _, item := range movies {
+		if strconv.Itoa(item.ID) == params["id"] {
+			json.NewEncoder(w).Encode(item)
+			return
+		}
+	}
 }
 
 func handlecreateMovie(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("handlecreateMovie")
+	w.Header().Set("Content-Type", "application/json")
+	var movie Movie
+	_ = json.NewDecoder(r.Body).Decode(&movie)
+	movie.ID = len(movies) + 1
+	movies = append(movies, movie)
+	json.NewEncoder(w).Encode(movie)
+
 }
 
 func handleUpdateMovie(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("handleUpdateMovie")
+	w.Header().Set("Content-Type", "application/json")
+	params := mux.Vars(r)
+	for index, item := range movies {
+		if strconv.Itoa(item.ID) == params["id"] {
+			movies = append(movies[:index], movies[index+1:]...)
+			var movie Movie
+			_ = json.NewDecoder(r.Body).Decode(&movie)
+			movie.ID = item.ID
+			movies = append(movies, movie)
+			json.NewEncoder(w).Encode(movie)
+			return
+		}
+	} 
 }
 
 func handleDeleteMovie(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("handleDeleteMovie")
+	w.Header().Set("Content-Type", "application/json")
+	params := mux.Vars(r)
+	for index, item := range movies {
+		if strconv.Itoa(item.ID) == params["id"] {
+			movies = append(movies[:index], movies[index+1:]...)
+			break
+		}
+	}
 }
